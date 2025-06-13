@@ -1,14 +1,15 @@
 package main
 
 import (
-	"net/http"					// allows HTTP requests 
-	"github.com/gin-gonic/gin"	// GIN API FRAMEWORK 
-	"log"						// Logging steps 
-	"sync"						// Used for mutex - stops multiple threads from accessing the shared data at the same time (like a semaphore)
+	"fmt"
+	"log"      // Logging steps
+	"net/http" // allows HTTP requests
+	"sync"     // Used for mutex - stops multiple threads from accessing the shared data at the same time (like a semaphore)
+
+	"github.com/gin-gonic/gin" // GIN API FRAMEWORK
 )
 
-
-// structs are used for grouping data 
+// structs are used for grouping data
 // as no methods i dont wanna use a obj
 type Task struct {
 	ID   int    `json:"id"`
@@ -50,6 +51,30 @@ func main() {
 		log.Printf("Task added: %+v\n", newTask)
 		c.JSON(http.StatusCreated, newTask)
 	})
+
+	// DELETE /tasks/:id
+	router.DELETE("/tasks/:id", func(c *gin.Context) {
+		taskIDParam := c.Param("id") // Get the :id parameter from URL
+		var deleted bool //gonna use this to control my mutex 
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		for i, t := range tasks {
+			if fmt.Sprintf("%d", t.ID) == taskIDParam {
+				tasks = append(tasks[:i], tasks[i+1:]...) // Remove the task
+				deleted = true
+				break
+			}
+		}
+
+		if deleted {
+			log.Printf("Deleted", taskIDParam)
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+		}
+	})
+
 
 	// Start server
 	log.Println("Starting server on :8080")
