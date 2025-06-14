@@ -63,7 +63,7 @@ func main() {
 		for i, t := range tasks {
 			if fmt.Sprintf("%d", t.ID) == taskIDParam {
 				tasks = append(tasks[:i], tasks[i+1:]...) // Remove the task
-				deleted = true
+				deleted = true // for mutex 
 				break
 			}
 		}
